@@ -2,8 +2,9 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "include/lexer.h"
-#include "include/utils.h"
+#include "../include/lexer.h"
+#include "../include/utils.h"
+
 
 Token tokens[MAX_TOKENS];
 int nTokens;
