@@ -6,6 +6,7 @@
 enum Atom {
 	ID,
 	
+	VAR,
 	FUNCTION,
 	IF,
 	ELSE,
@@ -38,9 +39,9 @@ enum Atom {
 	EQ,
 	NE,
 	LT,
-	LTE,
+	LE,
 	GT,
-	GTE
+	GE
 };
 
 typedef struct

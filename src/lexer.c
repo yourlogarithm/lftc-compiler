@@ -16,13 +16,17 @@ void addToken(TokenArray *arr, unsigned int position, unsigned int line, unsigne
 	tk->code = code;
 	tk->position = position;
 	tk->line = line;
-	if (text != NULL) {
-		// TODO: process and insert
+	if (code == ID || code == STR) {
+		strcpy(tk->text, text);
+	} else if (code == INT) {
+		tk->i = atoi(text);
+	} else if (code == REAL) {
+		tk->r = atof(text);
 	}
 }
 
 // copy in the dst buffer the string between [begin,end)
-char *copyn(char *dst, const char *begin, const char *end)
+void copyn(char *dst, const char *begin, const char *end)
 {
 	char *p = dst;
 	if (end - begin > MAX_STR)
@@ -30,26 +34,26 @@ char *copyn(char *dst, const char *begin, const char *end)
 	while (begin != end)
 		*p++ = *begin++;
 	*p = '\0';
-	return dst;
 }
 
-char* accumulate(
-	char* accumulator_buffer, 
-	char* pch, 
+void accumulate(
+	char* text, 
+	char** pch, 
 	unsigned int* position, 
-	bool (*must_continue)(char*)
+	bool (*must_continue)(char**),
+	bool copy
 ) {
-	char* start = pch;
-	while (must_continue(pch)) {
-		pch++;
+	char* start = *pch;
+	while (must_continue(*pch)) {
+		(*pch)++;
 		(*position)++;
 	}
-	pch--;
 	(*position)--;
-	copyn(accumulator_buffer, start, pch);
+	if (copy)
+		copyn(text, start, *pch);
 }
 
-bool is_from_word(char* pch) {
+bool word_accumulator(char* pch) {
 	return isalpha(*pch) || *pch == '_';
 }
 
@@ -57,41 +61,239 @@ bool newline_accumulator(char* pch) {
 	return *pch != '\n';
 }
 
-TokenArray tokenize(const char *pch)
+bool string_literal_accumulator(char* pch) {
+	return *pch != '"';
+}
+
+void has_second_equal_check_add_token(
+	TokenArray* arr, char** pch, unsigned int position, unsigned int line, 
+	unsigned int default_code, unsigned int second_equal_code
+) {
+	if (*(pch+1) == '=') {
+		addToken(arr, position, line, second_equal_code, NULL);
+		(*pch)++;
+	} else {
+		addToken(arr, position, line, default_code, NULL);
+	}
+	(*pch)++;
+}
+
+TokenArray tokenize(const char *str)
 {
+	char *pch = (char*) str;
 	TokenArray arr = {0};
 	unsigned int position = 1;
 	unsigned int line = 1;
-	char accumulator_buffer[MAX_STR+1];
+	char text[MAX_STR+1];
 	while (1) {
-		printf("%c", *pch);
 		switch (*pch) {
 			case '\0':
 				addToken(&arr, position, line, FINISH, NULL);
 				return arr;
 			case '#':
-				accumulate(accumulator_buffer, pch, &position, newline_accumulator);
+				accumulate(text, &pch, &position, newline_accumulator, false);
 				break;
 			case '\n':
 				line++;
 				position = 0;
+				pch++;
 				break;
 			case '\r':
+				pch++;
 				break;
 			case ' ':
+				pch++;
+				break;
+			case '\t':
+				pch++;
+				break;
+			case '(':
+				addToken(&arr, position, line, LPAR, NULL);
+				pch++;
+				break;
+			case ')':
+				addToken(&arr, position, line, RPAR, NULL);
+				pch++;
+				break;
+			case ':':
+				addToken(&arr, position, line, COLON, NULL);
+				pch++;
+				break;
+			case ';':
+				addToken(&arr, position, line, SEMICOLON, NULL);
+				pch++;
+				break;
+			case ',':
+				addToken(&arr, position, line, COMMA, NULL);
+				pch++;
+				break;
+			case '<':
+				has_second_equal_check_add_token(&arr, &pch, position, line, LT, LE);
+				break;
+			case '>':
+				has_second_equal_check_add_token(&arr, &pch, position, line, GT, GE);
+				break;
+			case '=':
+				has_second_equal_check_add_token(&arr, &pch, position, line, ASSIGN, EQ);
+				break;
+			case '+':
+				addToken(&arr, position, line, ADD, NULL);
+				pch++;
+				break;
+			case '-':
+				addToken(&arr, position, line, SUB, NULL);
+				pch++;
+				break;
+			case '*':
+				addToken(&arr, position, line, MUL, NULL);
+				pch++;
+				break;
+			case '/':
+				addToken(&arr, position, line, DIV, NULL);
+				pch++;
+				break;
+			case '"':
+				pch++;
+				position++;
+				accumulate(text, &pch, &position, string_literal_accumulator, true);
+				pch++;
+				addToken(&arr, position, line, STR, text);
 				break;
 			default:
-				if (is_from_word(pch)) {
-					char* text = accumulate(accumulator_buffer, pch, &position, is_from_word);
+				if (word_accumulator(pch)) {
+					accumulate(text, &pch, &position, word_accumulator, true);
 					switch (hash(text)) {
-						case 7572387384277067:
-							addToken(&arr, position, line, FUNCTION, text);
+						case HASH_VAR:
+							addToken(&arr, position, line, VAR, NULL);
 							break;
+						case HASH_FUNCTION:
+							addToken(&arr, position, line, FUNCTION, NULL);
+							break;
+						case HASH_IF:
+							addToken(&arr, position, line, IF, NULL);
+							break;
+						case HASH_ELSE:
+							addToken(&arr, position, line, ELSE, NULL);
+							break;
+						case HASH_WHILE:
+							addToken(&arr, position, line, WHILE, NULL);
+							break;
+						case HASH_END:
+							addToken(&arr, position, line, END, NULL);
+							break;
+						case HASH_RETURN:
+							addToken(&arr, position, line, RETURN, NULL);
+							break;
+						case HASH_TYPE_INT:
+							addToken(&arr, position, line, TYPE_INT, NULL);
+							break;
+						case HASH_TYPE_REAL:
+							addToken(&arr, position, line, TYPE_REAL, NULL);
+							break;
+						case HASH_TYPE_STR:
+							addToken(&arr, position, line, TYPE_STR, NULL);
+							break;
+						default:
+							addToken(&arr, position, line, ID, text);
 					}
+				} else if (isdigit(*pch)) {
+					char* start = pch;
+					bool is_real = false;
+					while (isdigit(*pch) || *pch == '.') {
+						if (*pch == '.') {
+							if (is_real)
+								err("unexpected character `%c` at line %d position %d\n", *pch, line, position);
+							is_real = true;
+						}
+						pch++;
+						position++;
+					}
+					position -= 1;
+					copyn(text, start, pch);
+					if (is_real) {
+						addToken(&arr, position, line, REAL, text);
+					} else {
+						addToken(&arr, position, line, INT, text);
+					}
+				} else {
+					err("unexpected character `%c` at line %d position %d\n", *pch, line, position);
 				}
-				err("unexpected character `%c` at position %d line %d", *pch, position, line);
 		}
 		position++;
 	}
 }
 
+char* code_to_str(unsigned int code) {
+	switch (code) {
+		case ID:
+			return "ID";
+		case VAR:
+			return "VAR";
+		case FUNCTION:
+			return "FUNCTION";
+		case IF:
+			return "IF";
+		case ELSE:
+			return "ELSE";
+		case WHILE:
+			return "WHILE";
+		case END:
+			return "END";
+		case RETURN:
+			return "RETURN";
+		case TYPE_INT:
+			return "TYPE_INT";
+		case TYPE_REAL:
+			return "TYPE_REAL";
+		case TYPE_STR:
+			return "TYPE_STR";
+		case INT:
+			return "INT";
+		case REAL:
+			return "REAL";
+		case STR:
+			return "STR";
+		case COMMA:
+			return "COMMA";
+		case COLON:
+			return "COLON";
+		case SEMICOLON:
+			return "SEMICOLON";
+		case LPAR:
+			return "LPAR";
+		case RPAR:
+			return "RPAR";
+		case FINISH:
+			return "FINISH";
+		case ADD:
+			return "ADD";
+		case SUB:
+			return "SUB";	
+		case MUL:
+			return "MUL";
+		case DIV:
+			return "DIV";
+		case AND:
+			return "AND";
+		case OR:
+			return "OR";
+		case NOT:
+			return "NOT";
+		case ASSIGN:
+			return "ASSIGN";
+		case EQ:
+			return "EQ";
+		case NE:
+			return "NE";
+		case LT:
+			return "LT";
+		case LE:
+			return "LE";
+		case GT:
+			return "GT";
+		case GE:
+			return "GE";
+		default:
+			err("unknown code %d", code);
+	}
+}
