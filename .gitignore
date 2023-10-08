@@ -1,5 +1,3 @@
 .vscode/
-# Ignore everything in the src/ directory
-src/*
-# Except for C files
-!src/*.c
+*.dSYM/
+build/

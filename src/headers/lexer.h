@@ -1,6 +1,7 @@
 #pragma once
 
 #define MAX_STR 127
+#define MAX_TOKENS 4096
 
 enum Atom {
 	ID,
@@ -45,6 +46,7 @@ enum Atom {
 typedef struct
 {
 	int code; // ID, TYPE_INT, ...
+	int position; // the position from the input file
 	int line; // the line from the input file
 	union
 	{
@@ -54,9 +56,11 @@ typedef struct
 	};
 } Token;
 
-#define MAX_TOKENS 4096
-extern Token tokens[];
-extern int nTokens;
+typedef struct {
+	Token tokens[MAX_TOKENS];
+	unsigned int length;
+} TokenArray;
 
-void tokenize(const char *pch);
-void showTokens();
+
+void addToken(TokenArray *arr, unsigned int position, unsigned int line, unsigned int code, char *text);
+TokenArray tokenize(const char *pch);
