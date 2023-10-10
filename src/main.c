@@ -10,8 +10,10 @@ int main() {
     for (int i = 0; i < t.length; i++) {
         Token tk = t.tokens[i];
         char* str_repr = code_to_str(tk.code);
-        if (tk.code == ID || tk.code == STR)
+        if (tk.code == ID)
             printf("%s:%s\n", str_repr, tk.text);
+        else if (tk.code == STR)
+            printf("%s:\"%s\"\n", str_repr, tk.text);
         else if (tk.code == INT)
             printf("%s:%d\n",  str_repr, tk.i);
         else if (tk.code == REAL)
