@@ -65,6 +65,13 @@ bool string_literal_accumulator(char* pch) {
 	return *pch != '"';
 }
 
+void consume_or_raise(char* pch, char expected, unsigned int code) {
+	if (*pch != expected) {
+		err("expected `%c` but found `%c`", expected, *pch);
+	}
+	pch += 2;
+}
+
 void has_second_equal_check_add_token(
 	TokenArray* arr, char** pch, unsigned int position, unsigned int line, 
 	unsigned int default_code, unsigned int second_equal_code
@@ -158,6 +165,17 @@ TokenArray tokenize(const char *str)
 				accumulate(text, &pch, &position, string_literal_accumulator, true);
 				pch++;
 				addToken(&arr, position, line, STR, text);
+				break;
+			case '&':
+				consume_or_raise(pch, '&', AND);
+				addToken(&arr, position, line, AND, NULL);
+				break;
+			case '|':
+				consume_or_raise(pch, '|', OR);
+				addToken(&arr, position, line, OR, NULL);
+				break;
+			case '!':
+				has_second_equal_check_add_token(&arr, &pch, position, line, NOT, NE);
 				break;
 			default:
 				if (word_accumulator(pch)) {
