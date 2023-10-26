@@ -3,6 +3,7 @@
 #include "utils.c"
 
 #include "lexer.c"
+#include "parser.c"
 
 int main() {
     printf("Started...\n");
@@ -11,6 +12,7 @@ int main() {
     for (int i = 0; i < t.length; i++) {
         print_token(&t.tokens[i]);
     }
+    parse(&t);
     free(raw_code_buffer);
     return 0;
 }
