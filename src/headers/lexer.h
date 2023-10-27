@@ -10,6 +10,7 @@ enum Atom {
     FUNCTION,
     IF,
     ELSE,
+    ELIF,
     WHILE,
     END,
     RETURN,

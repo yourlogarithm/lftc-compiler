@@ -4,7 +4,7 @@
 
 _Noreturn void tkerr(Token* token, const char *fmt, ...);
 
-bool consume(Token** tkit, int expected_code);
+bool consume(Token** tkit, int expected_code, char* err_msg);
 
 bool consume_ranged(Token** tkit, int min_code, int max_code);
 
@@ -41,7 +41,5 @@ bool instr(Token** tkit);
 bool block(Token** tkit);
 
 bool def_func(Token** tkit);
-
-bool program(Token* tkit);
 
 void parse(TokenArray* token_array);

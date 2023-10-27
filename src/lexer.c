@@ -44,7 +44,7 @@ void accumulate(
     bool copy
 ) {
     char* start = *pch;
-    while (must_continue(*pch)) {
+    while (must_continue(*pch) && **pch != '\0' && **pch != '\n') {
         (*pch)++;
         (*position)++;
     }
@@ -78,7 +78,7 @@ void has_second_equal_check_add_token(
     TokenArray* arr, char** pch, unsigned int position, unsigned int line, 
     unsigned int default_code, unsigned int second_equal_code
 ) {
-    if (*(pch+1) == '=') {
+    if (*(*pch+1) == '=') {
         addToken(arr, position, line, second_equal_code, NULL);
         (*pch)++;
     } else {
@@ -192,6 +192,9 @@ TokenArray tokenize(const char *str)
                         case HASH_IF:
                             addToken(&arr, position, line, IF, NULL);
                             break;
+                        case HASH_ELIF:
+                            addToken(&arr, position, line, ELIF, NULL);
+                            break;
                         case HASH_ELSE:
                             addToken(&arr, position, line, ELSE, NULL);
                             break;
@@ -215,6 +218,7 @@ TokenArray tokenize(const char *str)
                             break;
                         default:
                             addToken(&arr, position, line, ID, text);
+                            break;
                     }
                 } else if (isdigit(*pch)) {
                     char* start = pch;
@@ -255,6 +259,8 @@ char* code_to_str(unsigned int code) {
             return "IF";
         case ELSE:
             return "ELSE";
+        case ELIF:
+            return "ELIF";
         case WHILE:
             return "WHILE";
         case END:
