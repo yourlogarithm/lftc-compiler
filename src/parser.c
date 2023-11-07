@@ -5,6 +5,7 @@
 
 #include "headers/lexer.h"
 #include "headers/parser.h"
+#include "da.c"
 
 _Noreturn void tkerr(Token* token, const char *fmt, ...)
 {
@@ -17,27 +18,46 @@ _Noreturn void tkerr(Token* token, const char *fmt, ...)
     exit(EXIT_FAILURE);
 }
 
-bool consume(Token** tkit, int expected_code, char* err_msg) {
+Token* consume(Token** tkit, int expected_code, char* err_msg) {
     if ((*tkit)->code == expected_code) {
         (*tkit)++;
-        return true;
+        return (*tkit) - 1;
     }
     if (err_msg)
         tkerr(*tkit, err_msg);
+    return NULL;
+}
+
+Symbol* get_identifier(Token** tkit, Domain* domain, int kind, char* err_msg) {
+    Token* idtk = consume(tkit, ID, err_msg);
+    if (!idtk)
+        return NULL;
+    const char* name = idtk->text;
+    Symbol* s = searchSymbol(domain, name);
+    if (s)
+        tkerr(*tkit, "symbol redefinition `%s`", name);
+    s = addSymbol(domain, name, kind);
+    s->local = domain->parent ? true : false;
+    return s;
+}
+
+bool base_type(Token** tkit, Symbol* s) {
+    Token* tk = NULL;
+    (tk = consume(tkit, TYPE_INT, NULL)) || (tk = consume(tkit, TYPE_REAL, NULL)) || (tk = consume(tkit, TYPE_STR, NULL));
+    if (tk) {
+        s->type = tk->code;
+        return true;
+    }
     return false;
 }
 
-bool base_type(Token** tkit) {
-    return consume(tkit, TYPE_INT, NULL) || consume(tkit, TYPE_REAL, NULL) || consume(tkit, TYPE_STR, NULL);
-}
-
-bool def_var(Token** tkit) {
+bool def_var(Token** tkit, Domain* domain) {
     Token* start_position = *tkit;
 
     if (consume(tkit, VAR, NULL)) {
-        consume(tkit, ID, "expected identifier after `var` keyword");
+        Symbol* s = get_identifier(tkit, domain, KIND_VAR, "expected identifier after `var` keyword");
         consume(tkit, COLON, "expected `:` after identifier");
-        if (!base_type(tkit))
+        if (!base_type(tkit, s))
             tkerr(*tkit, "expected type after `:`, one of (int, real, str)");
         consume(tkit, SEMICOLON, "expected `;` at the of variable declaration");
         return true;
@@ -52,13 +72,21 @@ bool inf_consume(Token** tkit, consumer_func func) {
     return true;
 }
 
-bool func_param(Token** tkit) {
-    return consume(tkit, ID, NULL) && consume(tkit, COLON, NULL) && base_type(tkit);
+bool func_param(Token** tkit, Domain* domain, Symbol* fn) {
+    Symbol* arg = get_identifier(tkit, domain, KIND_ARG, NULL);
+    if (!arg)
+        return false;
+    if (!consume(tkit, COLON, NULL))
+        return false; 
+    if (!base_type(tkit, arg))
+        return false;
+    addFnArg(fn, arg->name);
+    return true;
 }
 
-bool func_params(Token** tkit) {
+bool func_params(Token** tkit, Domain* domain, Symbol* fn) {
     do {
-        if (!func_param(tkit))
+        if (!func_param(tkit, domain, fn))
             return false;
     } while (consume(tkit, COMMA, NULL));
     return true;
@@ -190,20 +218,23 @@ bool block(Token** tkit) {
     return false;
 }
 
-bool def_func(Token** tkit) {
+bool def_func(Token** tkit, Domain* domain) {
     Token* start_position = *tkit;
 
     if (consume(tkit, FUNCTION, NULL)) {
-        consume(tkit, ID, "expected identifier after `function` keyword");
+        Symbol* fn_symbol = get_identifier(tkit, domain, KIND_FN, "expected identifier after `function` keyword");
+        fn_symbol->args = NULL;
+        domain = addDomain(domain);
         consume(tkit, LPAR, "expected `(` after function identifier");
-        if (!func_params(tkit))
+        if (!func_params(tkit, domain, fn_symbol))
             tkerr(*tkit, "expected function signature");
         consume(tkit, RPAR, "expected `)` after function parameters");
         consume(tkit, COLON, "expected `:` followed by return type after function signature");
-        if (!base_type(tkit))
+        if (!base_type(tkit, fn_symbol))
             tkerr(*tkit, "expected type `int`, `real` or `str`");
         inf_consume(tkit, def_var);
         block(tkit);
+        delDomain(&domain);
         consume(tkit, END, "expected `end` keyword after function definition");
         return true;
     }
@@ -216,7 +247,8 @@ void parse(TokenArray* token_array)
 {
     Token* tkit = token_array->tokens;
 
-    while (def_var(&tkit) || def_func(&tkit) || block(&tkit));
-
+    Domain* domain = addDomain(NULL);
+    while (def_var(&tkit, domain) || def_func(&tkit, domain) || block(&tkit));
+    delDomain(&domain);
     consume(&tkit, FINISH, "unexpected character");
 }
