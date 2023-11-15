@@ -56,7 +56,7 @@ bool def_var(Token** tkit, Domain* domain) {
 
     if (consume(tkit, VAR, NULL)) {
         Symbol* s = get_identifier(tkit, domain, KIND_VAR, "expected identifier after `var` keyword");
-        consume(tkit, COLON, "expected `:` after identifier");
+        consume(tkit, COLON, "expected `:` followed by type after identifier");
         if (!base_type(tkit, s))
             tkerr(*tkit, "expected type after `:`, one of (int, real, str)");
         consume(tkit, SEMICOLON, "expected `;` at the of variable declaration");
@@ -76,18 +76,23 @@ bool func_param(Token** tkit, Domain* domain, Symbol* fn) {
     Symbol* arg = get_identifier(tkit, domain, KIND_ARG, NULL);
     if (!arg)
         return false;
-    if (!consume(tkit, COLON, NULL))
-        return false; 
-    if (!base_type(tkit, arg))
-        return false;
+    consume(tkit, COLON, "expected `:` followed by type after identifier");
+    if (!base_type(tkit, arg)) {
+        tkerr(*tkit, "expected type after `:`, one of (int, real, str)");
+    }
     addFnArg(fn, arg->name);
     return true;
 }
 
 bool func_params(Token** tkit, Domain* domain, Symbol* fn) {
+    bool first = true;
     do {
-        if (!func_param(tkit, domain, fn))
+        if (!func_param(tkit, domain, fn)) {
+            if (!first)
+                tkerr(*tkit, "expected parameter after `,`");
             return false;
+        }
+        first = false;
     } while (consume(tkit, COMMA, NULL));
     return true;
 }
@@ -120,27 +125,28 @@ bool expr_prefix(Token** tkit) {
     return factor(tkit);
 }
 
-bool expr_mul(Token** tkit) {
+bool asterisk_expr(Token** tkit, ExprTkFunc func, int tk0, int tk1) {
+    bool first = true;
     do {
-        if (!expr_prefix(tkit))
+        if (!func(tkit)) {
+            if (!first)
+                tkerr(*tkit, "expected expression after operator");
             return false;
-    } while (consume(tkit, MUL, NULL) || consume(tkit, DIV, NULL));
+        }
+        first = false;
+    } while (consume(tkit, tk0, NULL) || consume(tkit, tk1, NULL));
     return true;
 }
 
 bool expr_add(Token** tkit) {
-    do {
-        if (!expr_mul(tkit))
-            return false;
-    } while (consume(tkit, ADD, NULL) || consume(tkit, SUB, NULL));
-    return true;
+    return asterisk_expr(tkit, expr_prefix, MUL, DIV);
 }
 
 bool expr_comp(Token** tkit) {
-    if (!expr_add(tkit))
+    if (!asterisk_expr(tkit, expr_add, ADD, SUB))
         return false;
     if ((consume(tkit, LT, NULL) || consume(tkit, GT, NULL) || consume(tkit, EQ, NULL) || consume(tkit, LE, NULL) || consume(tkit, GE, NULL) || consume(tkit, NE, NULL)) && !expr_add(tkit))
-        tkerr(*tkit, "expected expression after operator");
+        tkerr(*tkit, "expected expression after operator `");
     return true;
 }
 
@@ -151,18 +157,19 @@ bool expr_assign(Token** tkit) {
 }
 
 bool expr(Token** tkit) {
-    do {
-        if (!expr_assign(tkit))
-            return false;
-    } while (consume(tkit, AND, NULL) || consume(tkit, OR, NULL));
-    return true;
+    // do {
+    //     if (!expr_assign(tkit))
+    //         return false;
+    // } while (consume(tkit, AND, NULL) || consume(tkit, OR, NULL));
+    // return true;
+    return asterisk_expr(tkit, expr_assign, AND, OR);
 }
 
 bool instr(Token** tkit) {
-    expr(tkit);
-
-    if (consume(tkit, SEMICOLON, NULL)) 
+    if (expr(tkit)) {
+        consume(tkit, SEMICOLON, "expected `;` after expression");
         return true;
+    }
 
     if (consume(tkit, IF, NULL)) {
         consume(tkit, LPAR, "expected `(` after `if` keyword");
@@ -231,7 +238,7 @@ bool def_func(Token** tkit, Domain* domain) {
         consume(tkit, RPAR, "expected `)` after function parameters");
         consume(tkit, COLON, "expected `:` followed by return type after function signature");
         if (!base_type(tkit, fn_symbol))
-            tkerr(*tkit, "expected type `int`, `real` or `str`");
+            tkerr(*tkit, "expected function type `int`, `real` or `str`");
         inf_consume(tkit, def_var);
         block(tkit);
         delDomain(&domain);

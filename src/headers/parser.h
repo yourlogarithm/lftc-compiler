@@ -3,6 +3,8 @@
 #include "lexer.h"
 #include "da.h"
 
+typedef bool (*ExprTkFunc)(Token**);
+
 _Noreturn void tkerr(Token* token, const char *fmt, ...);
 
 Token* consume(Token** tkit, int expected_code, char* err_msg);
@@ -27,7 +29,7 @@ bool factor(Token** tkit);
 
 bool expr_prefix(Token** tkit);
 
-bool expr_mul(Token** tkit);
+bool asterisk_expr(Token** tkit, ExprTkFunc func, int tk0, int tk1);
 
 bool expr_add(Token** tkit);
 
