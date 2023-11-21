@@ -4,6 +4,8 @@
 
 #include "lexer.c"
 #include "parser.c"
+#include "da.c"
+#include "ta.c"
 
 int main() {
     printf("Started...\n");

@@ -36,9 +36,10 @@ struct Domain
 {
     Domain *parent;     // the parent of this domain or NULL for the global domain
     Symbol *symbols; // simple linked list of symbols
+    Token **tkit;
 };
 
-Domain *addDomain(Domain* domain);                               // adds a new domain to ST as the current domain
+Domain *addDomain(Domain* domain, Token** tkit);                               // adds a new domain to ST as the current domain
 Domain *delDomain(Domain** domain);                                   // deletes the current domain from ST and returns the the last one
 Symbol *searchInCurrentDomain(Domain* domain, const char *name);   // searches a symbol by name only in the current domain
 Symbol *searchSymbol(Domain* domain, const char *name);               // searches in all domains

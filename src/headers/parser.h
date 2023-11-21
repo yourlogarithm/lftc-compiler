@@ -3,46 +3,46 @@
 #include "lexer.h"
 #include "da.h"
 
-typedef bool (*ExprTkFunc)(Token**);
+typedef bool (*ExprDomainFunc)(Domain*);
 
-_Noreturn void tkerr(Token* token, const char *fmt, ...);
+_Noreturn void tkerr(Domain* domain, const char *fmt, ...);
 
-Token* consume(Token** tkit, int expected_code, char* err_msg);
+Token* consume(Domain* domain, int expected_code, char* err_msg);
 
-bool consume_ranged(Token** tkit, int min_code, int max_code);
+bool consume_ranged(Domain* domain, int min_code, int max_code);
 
-bool base_type(Token** tkit, Symbol* s);
+bool base_type(Domain* domain, Symbol* s);
 
-bool def_var(Token** tkit, Domain* domain);
+bool def_var(Domain* domain);
 
-typedef bool (*consumer_func)(Token** tkit);
+typedef bool (*consumer_func)(Domain* domain);
 
-bool inf_consume(Token** tkit, consumer_func func);
+bool inf_consume(Domain* domain, consumer_func func);
 
-bool func_param(Token** tkit, Domain* domain, Symbol* s);
+bool func_param(Domain* domain, Symbol* s);
 
-bool func_params(Token** tkit, Domain* domain, Symbol* s);
+bool func_params(Domain* domain, Symbol* s);
 
-bool complex_factor(Token** tkit);
+bool complex_factor(Domain* domain);
 
-bool factor(Token** tkit);
+bool factor(Domain* domain);
 
-bool expr_prefix(Token** tkit);
+bool expr_prefix(Domain* domain);
 
-bool asterisk_expr(Token** tkit, ExprTkFunc func, int tk0, int tk1);
+bool asterisk_expr(Domain* domain, ExprDomainFunc func, int tk0, int tk1);
 
-bool expr_add(Token** tkit);
+bool expr_add(Domain* domain);
 
-bool expr_comp(Token** tkit);
+bool expr_comp(Domain* domain);
 
-bool expr_assign(Token** tkit);
+bool expr_assign(Domain* domain);
 
-bool expr(Token** tkit);
+bool expr(Domain* domain);
 
-bool instr(Token** tkit);
+bool instr(Domain* domain);
 
-bool block(Token** tkit);
+bool block(Domain* domain);
 
-bool def_func(Token** tkit, Domain* domain);
+bool def_func(Domain* domain);
 
 void parse(TokenArray* token_array);

@@ -4,14 +4,16 @@
 
 #include "headers/da.h"
 #include "headers/utils.h"
+#include "headers/lexer.h"
 
 
-Domain *addDomain(Domain* domain)
+Domain *addDomain(Domain* domain, Token** tkit)
 {
     puts("creates a new domain");
     Domain *d = (Domain *) safeAlloc(sizeof(Domain));
     d->parent = domain;
     d->symbols = NULL;
+    d->tkit = tkit;
     return d;
 }
 
