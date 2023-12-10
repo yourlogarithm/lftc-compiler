@@ -19,9 +19,9 @@ typedef bool (*consumer_func)(Domain* domain);
 
 bool inf_consume(Domain* domain, consumer_func func);
 
-bool func_param(Domain* domain, Symbol* s);
+bool func_param(Domain* domain);
 
-bool func_params(Domain* domain, Symbol* s);
+bool func_params(Domain* domain);
 
 bool complex_factor(Domain* domain);
 

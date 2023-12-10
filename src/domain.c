@@ -5,6 +5,9 @@
 #include "domain.h"
 #include "utils.h"
 
+Ret ret;
+Symbol *crtFn;
+
 Domain *addDomain(Domain* domain, Token** tkit)
 {
     puts("creates a new domain");

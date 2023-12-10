@@ -324,6 +324,41 @@ char* code_to_str(unsigned int code) {
     }
 }
 
+char* op_to_str(unsigned int code) {
+    switch (code) {
+        case ADD:
+            return "+";
+        case SUB:
+            return "-";
+        case MUL:
+            return "*";
+        case DIV:
+            return "/";
+        case AND:
+            return "&&";
+        case OR:
+            return "||";
+        case NOT:
+            return "!";
+        case ASSIGN:
+            return "=";
+        case EQ:
+            return "==";
+        case NE:
+            return "!=";
+        case LT:
+            return "<";
+        case LE:
+            return "<=";
+        case GT:
+            return ">";
+        case GE:
+            return ">=";
+        default:
+            err("invalid code %d", code);
+    }
+}
+
 void print_token(Token* tk) {
     char* str_val = code_to_str(tk->code);
     printf("%d %d %s", tk->line, tk->position, str_val);

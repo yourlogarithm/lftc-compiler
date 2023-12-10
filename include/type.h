@@ -5,4 +5,4 @@
 #include "domain.h"
 
 void addPredefinedFns(Domain *domain);
-void setRet(Ret* ret, int type, bool lval);
+void setRet(int type, bool lval);

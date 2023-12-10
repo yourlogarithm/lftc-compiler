@@ -67,4 +67,5 @@ typedef struct {
 void add_token(TokenArray *arr, unsigned int position, unsigned int line, unsigned int code, char *text);
 TokenArray tokenize(const char *pch);
 char* code_to_str(unsigned int code);
+char* op_to_str(unsigned int code);
 void print_token(Token *tk);

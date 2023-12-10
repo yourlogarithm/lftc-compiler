@@ -10,6 +10,8 @@ typedef struct
     bool lval; // if it is a left-value (required for types analysis)
 } Ret;
 
+extern Ret ret;
+
 enum
 {
     KIND_VAR,
@@ -31,6 +33,8 @@ struct Symbol
     };
     Symbol *next; // link to the next Symbol in list
 };
+
+extern Symbol *crtFn;
 
 struct Domain;
 typedef struct Domain Domain;
