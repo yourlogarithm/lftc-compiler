@@ -78,7 +78,7 @@ bool func_param(Token** tkit, Domain* domain, Symbol* fn) {
         return false;
     consume(tkit, COLON, "expected `:` followed by type after identifier");
     if (!base_type(tkit, arg)) {
-        tkerr(*tkit, "expected type after `:`, one of (int, real, str)");
+        tkerr(*tkit, "expected parameter type after `:`, one of (int, real, str)");
     }
     addFnArg(fn, arg->name);
     return true;
@@ -146,7 +146,7 @@ bool expr_comp(Token** tkit) {
     if (!asterisk_expr(tkit, expr_add, ADD, SUB))
         return false;
     if ((consume(tkit, LT, NULL) || consume(tkit, GT, NULL) || consume(tkit, EQ, NULL) || consume(tkit, LE, NULL) || consume(tkit, GE, NULL) || consume(tkit, NE, NULL)) && !expr_add(tkit))
-        tkerr(*tkit, "expected expression after operator `");
+        tkerr(*tkit, "expected expression after operator");
     return true;
 }
 
