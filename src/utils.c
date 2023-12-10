@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "headers/utils.h"
+#include "utils.h"
 
 void err(const char *fmt, ...)
 {

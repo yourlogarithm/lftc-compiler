@@ -1,11 +1,12 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdbool.h>
 
-#include "headers/lexer.h"
-#include "headers/utils.h"
-#include "djb2.c"
+#include "lexer.h"
+#include "utils.h"
+#include "djb2.h"
 
 void addToken(TokenArray *arr, unsigned int position, unsigned int line, unsigned int code, char *text)
 {
@@ -25,7 +26,6 @@ void addToken(TokenArray *arr, unsigned int position, unsigned int line, unsigne
     }
 }
 
-// copy in the dst buffer the string between [begin,end)
 void copyn(char *dst, const char *begin, const char *end)
 {
     char *p = dst;
@@ -40,7 +40,7 @@ void accumulate(
     char* text, 
     char** pch, 
     unsigned int* position, 
-    bool (*must_continue)(char**),
+    bool (*must_continue)(char*),
     bool copy
 ) {
     char* start = *pch;

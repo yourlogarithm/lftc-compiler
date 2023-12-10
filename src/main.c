@@ -1,20 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "utils.c"
 
-#include "lexer.c"
-#include "parser.c"
-#include "da.c"
-#include "ta.c"
+#include "utils.h"
+#include "lexer.h"
+#include "parser.h"
 
 int main() {
     printf("Started...\n");
-    char* raw_code_buffer = loadFile("resources/1.q");
-    TokenArray t = tokenize(raw_code_buffer);
-    for (int i = 0; i < t.length; i++) {
-        print_token(&t.tokens[i]);
-    }
+    char* buffer = loadFile("examples/1.q");
+    TokenArray t = tokenize(buffer);
+    for (Token *token = t.tokens; token < t.tokens + t.length; ++token)
+        print_token(token);
     parse(&t);
-    free(raw_code_buffer);
+    free(buffer);
     return 0;
 }

@@ -3,10 +3,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "headers/lexer.h"
-#include "headers/parser.h"
-#include "headers/da.h"
-#include "headers/ta.h"
+#include "parser.h"
+#include "type.h"
 
 _Noreturn void tkerr(Domain* domain, const char *fmt, ...)
 {
@@ -180,7 +178,8 @@ bool instr(Domain* domain) {
         consume(domain, LPAR, "expected `(` after `if` keyword");
         if (!expr(domain))
             tkerr(domain, "expected expression after `(`");
-        
+        if (domain->symbols->type == TYPE_STR)
+            tkerr(domain, "expected expression of type `int` or `real`");
         consume(domain, RPAR, "expected `)` after expression");
         if (!block(domain))
             tkerr(domain, "expected block after `if` statement");
@@ -203,6 +202,10 @@ bool instr(Domain* domain) {
     if (consume(domain, RETURN, NULL)) {
         if (!expr(domain))
             tkerr(domain, "expected expression after `return` keyword");
+        if (!domain->parent->symbols || domain->parent->symbols->kind != KIND_FN)
+            tkerr(domain, "`return` statement can only be used in a function");
+        if (domain->symbols->type != domain->parent->symbols->type)
+            tkerr(domain, "the return type must be the same as the function return type");
         consume(domain, SEMICOLON, "expected `;` after return statement");
         return true;
     }
@@ -211,6 +214,8 @@ bool instr(Domain* domain) {
         consume(domain, LPAR, "expected `(` after `while` keyword");
         if (!expr(domain))
             tkerr(domain, "expected expression after `(`");
+        if (domain->symbols->type == TYPE_STR)
+            tkerr(domain, "expected expression of type `int` or `real`");
         consume(domain, RPAR, "expected `)` after expression");
         if (!block(domain))
             tkerr(domain, "expected block after `while` statement");
